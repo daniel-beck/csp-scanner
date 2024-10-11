@@ -16,7 +16,7 @@ public class Scanner {
             "Inline Script Block", Pattern.compile("<script.*>.*\\S+.*</script>"),
             "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'\")|(checkUrl='[^']*\"[^']*\"')"));
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         if (args.length < 1) {
             System.err.println("Usage: java -jar csp-scanner.jar <file-or-dir> [<file-or-dir> ...]");
