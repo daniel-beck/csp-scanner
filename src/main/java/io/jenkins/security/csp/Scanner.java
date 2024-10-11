@@ -12,12 +12,22 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Scanner {
+    /**
+     * Patterns identified in .jelly files
+     */
     private static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s(on[a-z]+)=[^>]+>"),
             "Inline Script Block", Pattern.compile("<script.*>.*\\S+.*</script>"),
             "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'\")|(checkUrl='[^']*\"[^']*\"')"));
 
-    public static void main(String[] args) {
+    /**
+     * Patterns identified in .js files
+     */
+    // Examples indicate trying to match open-paren would be too restrictive:
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
+    // geval is defined in hudson-behavior.js
+    private static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
 
+    public static void main(String[] args) {
         if (args.length < 1) {
             System.err.println("Usage: java -jar csp-scanner.jar <file-or-dir> [<file-or-dir> ...]");
             System.exit(1);
@@ -61,10 +71,7 @@ public class Scanner {
 
         if (file.getName().endsWith(".js")) {
             final String text = Files.readString(file.toPath());
-            // Examples indicate trying to match open-paren would be too restrictive:
-            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
-            // geval is defined in hudson-behavior.js
-            matchRegex(file, text, "eval Call", Pattern.compile("\\Wg?eval\\W"));
+            JS_PATTERNS.forEach((title, pattern) -> matchRegex(file, text, title, pattern));
         }
     }
 
