@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.jenkins.security.csp</groupId>
-    <artifactId>csp-regex</artifactId>
+    <artifactId>csp-scanner</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -22,10 +22,10 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>io.jenkins.security.csp.Locator</mainClass>
+                            <mainClass>io.jenkins.security.csp.Scanner</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>csp-regex</finalName>
+                    <finalName>csp-scanner</finalName>
                 </configuration>
             </plugin>
         </plugins>

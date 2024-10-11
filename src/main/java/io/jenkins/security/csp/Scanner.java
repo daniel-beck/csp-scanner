@@ -10,11 +10,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class Locator {
+public class Scanner {
     public static void main(String[] args) throws IOException {
 
         if (args.length < 1) {
-            System.err.println("Usage: java -jar csp-regex.jar <file-or-dir> [<file-or-dir> ...]");
+            System.err.println("Usage: java -jar csp-scanner.jar <file-or-dir> [<file-or-dir> ...]");
             System.exit(1);
         }
 
@@ -81,7 +81,7 @@ public class Locator {
     private static class TheFileVisitor extends SimpleFileVisitor<Path> {
         @Override
         public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) throws IOException {
-            Locator.visitFile(file.toFile());
+            Scanner.visitFile(file.toFile());
             return FileVisitResult.CONTINUE;
         }
     }
