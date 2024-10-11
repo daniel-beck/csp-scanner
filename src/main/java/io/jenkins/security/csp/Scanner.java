@@ -8,9 +8,14 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Scanner {
+    private static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s(on[a-z]+)=[^>]+>"),
+            "Inline Script Block", Pattern.compile("<script.*>.*\\S+.*</script>"),
+            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'\")|(checkUrl='[^']*\"[^']*\"')"));
+
     public static void main(String[] args) throws IOException {
 
         if (args.length < 1) {
@@ -27,7 +32,11 @@ public class Scanner {
             }
 
             if (file.isFile()) {
-                visitFile(file);
+                try {
+                    visitFile(file);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 return;
             }
 
@@ -44,38 +53,30 @@ public class Scanner {
         });
     }
 
-    private static void visitFile(File file) {
+    private static void visitFile(File file) throws IOException {
         if (file.getName().endsWith(".jelly")) {
-            var eventHandlerRegex = "<[^>]+\\s(on[a-z]+)=[^>]+>";
-            var scriptRegex = "<script.*>.*\\S+.*</script>";
-            var checkUrlRegex = "(checkUrl=\"[^\"]*'[^\"]*'\")|(checkUrl='[^']*\"[^']*\"')";
-
-            var anyRegex = "(" + eventHandlerRegex + ")|(" + scriptRegex + ")|(" + checkUrlRegex + ")";
-
-            matchRegex(file, anyRegex);
+            final String text = Files.readString(file.toPath());
+            JELLY_PATTERNS.forEach((title, pattern) -> matchRegex(file, text, title, pattern));
         }
 
         if (file.getName().endsWith(".js")) {
-            matchRegex(file, "\\seval[(`]");
+            final String text = Files.readString(file.toPath());
+            // Examples indicate trying to match open-paren would be too restrictive:
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
+            // geval is defined in hudson-behavior.js
+            matchRegex(file, text, "eval Call", Pattern.compile("\\Wg?eval\\W"));
         }
     }
 
-    private static void matchRegex(File file, String regex) {
-        try {
-            final String text = Files.readString(file.toPath());
-            final Pattern pattern = Pattern.compile(regex);
-
-            pattern.matcher(text).results().forEach(matchResult -> {
-                System.out.println("== Match in " + file);
-                System.out.println("----");
-                System.out.println(matchResult.group());
-                System.out.println("----");
-                System.out.println();
-            });
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private static void matchRegex(File file, String text, String patternTitle, Pattern pattern) {
+        pattern.matcher(text).results().forEach(matchResult -> {
+            System.out.println("== " + patternTitle);
+            System.out.println("File: " + file.toPath());
+            System.out.println("----");
+            System.out.println(matchResult.group());
+            System.out.println("----");
+            System.out.println();
+        });
     }
 
     private static class TheFileVisitor extends SimpleFileVisitor<Path> {
