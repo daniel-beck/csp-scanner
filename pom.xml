@@ -15,17 +15,18 @@
     </properties>
 
     <build>
+        <finalName>csp-scanner</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
                 <configuration>
                     <archive>
                         <manifest>
                             <mainClass>io.jenkins.security.csp.Scanner</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>csp-scanner</finalName>
                 </configuration>
             </plugin>
         </plugins>
