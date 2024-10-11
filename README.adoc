@@ -1,0 +1,20 @@
+= CSP Regex
+
+This is a utility to quickly find occurrences of code in Jenkins plugins that is likely to cause trouble with https://www.jenkins.io/doc/developer/security/csp/[Content Security Policy].
+
+== Build
+
+[source,bash]
+----
+mvn clean verify
+----
+
+== Run
+
+Specify one or more files or directories as arguments, e.g.:
+
+[source,bash]
+----
+java -jar target/csp-regex.jar index.jelly
+java -jar target/csp-regex.jar /home/daniel/code/jenkins/*/src/main/resources/
+----
