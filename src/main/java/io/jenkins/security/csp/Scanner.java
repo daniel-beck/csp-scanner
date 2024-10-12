@@ -9,6 +9,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class Scanner {
@@ -54,7 +55,8 @@ public class Scanner {
                 try {
                     Files.walkFileTree(file.toPath(), new TheFileVisitor());
                 } catch (IOException e) {
-                    System.err.println("Failed to visit directory: " + file);
+                    System.err.println("Failed to visit directory '" + file + "':");
+                    e.printStackTrace(System.err);
                 }
                 return;
             }
@@ -88,8 +90,22 @@ public class Scanner {
 
     private static class TheFileVisitor extends SimpleFileVisitor<Path> {
         @Override
-        public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) throws IOException {
-            Scanner.visitFile(file.toFile());
+        public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
+            try {
+                Scanner.visitFile(file.toFile());
+            } catch (Exception e) {
+                System.err.println("Failed to visit file '" + file + "':");
+                e.printStackTrace(System.err);
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            final Path dirName = dir.getFileName();
+            if (Set.of(Path.of("work"), Path.of("target"), Path.of("node_modules")).contains(dirName)) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
             return FileVisitResult.CONTINUE;
         }
     }
