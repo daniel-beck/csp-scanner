@@ -19,7 +19,8 @@ public class Scanner {
      * Patterns identified in .jelly files
      */
     protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s(on[a-z]+)=[^>]+>"),
-            "Inline Script Block", Pattern.compile("(<script>|<script[^>]*[^/]>).*?\\S.*?</script>", Pattern.DOTALL),
+            // Experimentally, the lookbehind is only relevant in syntactically invalid-ish files (layout/layout.jelly), but doesn't break anything either
+            "Inline Script Block", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?(?<!<script[^>]{0,1000}>)</script>", Pattern.DOTALL),
             "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')"));
 
     /**

@@ -37,6 +37,48 @@ public class ScannerTest {
         assertMatch("<foo><script src='whatever' />" + scriptBlock + "</foo>", Scanner.JELLY_PATTERNS, scriptBlock);
     }
 
+    @Test
+    public void issue8() {
+        assertNoMatch("<script src=foo></script><script src=bar></script>", Scanner.JELLY_PATTERNS);
+        assertNoMatch("<script></script><script></script>", Scanner.JELLY_PATTERNS);
+        assertNoMatch("      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/fancybox/jquery.fancybox-1.2.1.pack.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\"></script>", Scanner.JELLY_PATTERNS);
+        assertNoMatch("      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/fancybox/jquery.fancybox-1.2.1.pack.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\"></script>", Scanner.JELLY_PATTERNS);
+
+        assertMatch("      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/fancybox/jquery.fancybox-1.2.1.pack.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/flowplayer/flowplayer-3.2.6.min.js\"></script>\n" +
+                "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\">foo</script>",
+                Scanner.JELLY_PATTERNS,
+                "<script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\">foo</script>");
+    }
+
     private static void assertMatch(String haystack, Map<String, Pattern> patterns, String expectedMatch) {
         final File dummy = new File("dummy");
         final List<Scanner.Match> matches = Scanner.matchRegexes(patterns, haystack, dummy);
