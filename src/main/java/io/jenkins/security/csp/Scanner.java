@@ -31,6 +31,9 @@ public class Scanner {
     // geval is defined in hudson-behavior.js
     protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
 
+    protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("((?<!\\\\)\")[^\"]*(?<![a-z0-9A-Z])(on[a-z]{3,20})=.*?((?<!\\\\)\")"),
+            "Inline Script Block (Java)", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?(?<!<script[^>]{0,1000}>)</script>", Pattern.DOTALL));
+
     protected static class Match {
         protected final String title;
         protected final String match;
@@ -81,12 +84,18 @@ public class Scanner {
     }
 
     private static void visitFile(File file) throws IOException {
-        if (file.getName().endsWith(".jelly")) {
+        final String fileName = file.getName();
+        if (fileName.endsWith(".jelly") || fileName.endsWith(".html") || fileName.endsWith(".properties")) {
             final String text = Files.readString(file.toPath());
             printMatches(matchRegexes(JELLY_PATTERNS, text, file));
         }
 
-        if (file.getName().endsWith(".js")) {
+        if (fileName.endsWith(".java")) {
+            final String text = Files.readString(file.toPath());
+            printMatches(matchRegexes(JAVA_PATTERNS, text, file));
+        }
+
+        if (fileName.endsWith(".js")) {
             final String text = Files.readString(file.toPath());
             printMatches(matchRegexes(JS_PATTERNS, text, file));
         }

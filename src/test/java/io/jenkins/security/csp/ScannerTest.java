@@ -16,6 +16,13 @@ import static org.hamcrest.Matchers.contains;
 
 public class ScannerTest {
     @Test
+    public void issue1() {
+        assertMatch("return \" onclick=\\\"fetch(decodeURIComponent(atob('\" + encodeForJavascript(url) + \"')), { method: 'post', headers: crumb.wrap({})}); return false\\\"\";",
+                Scanner.JAVA_PATTERNS,
+                "\" onclick=\\\"fetch(decodeURIComponent(atob('\"");
+    }
+
+    @Test
     public void issue2() {
         assertMatch("<f:textbox name=\"aggregatedTestResult.jobs\" value=\"${instance.jobs}\"\n" +
                 "checkUrl=\"'descriptorByName/hudson.tasks.test.AggregatedTestResultPublisher/check?value='+encodeURIComponent(this.value)\"\n" +

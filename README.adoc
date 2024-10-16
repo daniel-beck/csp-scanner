@@ -21,5 +21,5 @@ java -jar target/csp-scanner.jar /home/daniel/code/jenkins/*/src/main/resources/
 
 == Limitations
 
-* This tool currently only identifies problematic patterns in `.jelly` and `.js` files.
+* This tool currently only identifies problematic patterns in `.jelly`/`.java`/`.html`/`.properties` and `.js` files.
   Groovy views are unsupported.
