@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -20,7 +19,7 @@ public class Scanner {
      * Patterns identified in .jelly files
      */
     protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s(on[a-z]+)=[^>]+>"),
-            "Inline Script Block", Pattern.compile("<script.*>.*\\S+.*</script>"),
+            "Inline Script Block", Pattern.compile("(<script>|<script[^>]*[^/]>).*?\\S.*?</script>", Pattern.DOTALL),
             "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')"));
 
     /**
