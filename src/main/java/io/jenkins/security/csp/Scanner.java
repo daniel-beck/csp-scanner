@@ -118,7 +118,7 @@ public class Scanner {
     private static void printMatches(List<Match> matches) {
         matches.forEach(match -> {
             System.out.println("== " + match.title);
-            System.out.println("File: " + match.file.toPath());
+            System.out.println("File: " + match.file.toPath() + " +");
             System.out.println("Line: " + match.line);
             System.out.println("----");
             System.out.println(match.match);
