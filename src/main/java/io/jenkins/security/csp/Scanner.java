@@ -9,10 +9,13 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Scanner {
     private static final String JS_EVENT_ATTRIBUTES = "(on(auxclick|beforeinput|beforematch|beforetoggle|blur|cancel|canplay|canplaythrough|change|click|close|contextlost|contextmenu|contextrestored|copy|cuechange|cut|dblclick|drag|dragend|dragenter|dragleave|dragover|dragstart|drop|durationchange|emptied|ended|error|focus|formdata|input|invalid|keydown|keypress|keyup|load|loadeddata|loadedmetadata|loadstart|mousedown|mouseenter|mouseleave|mousemove|mouseout|mouseover|mouseup|paste|pause|play|playing|progress|ratechange|reset|resize|scroll|scrollend|securitypolicyviolation|seeked|seeking|select|slotchange|stalled|submit|suspend|timeupdate|toggle|volumechange|waiting|wheel))";
@@ -63,21 +66,25 @@ public class Scanner {
             }
 
             if (file.isFile()) {
+                final HashSet<Match> matches = new HashSet<>();
                 try {
-                    visitFile(file);
+                    visitFile(file, matches);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+                printMatches(matches.stream().sorted(Comparator.comparing(u -> u.title + u.file)).collect(Collectors.toList()));
                 return;
             }
 
             if (file.isDirectory()) {
+                final TheFileVisitor visitor = new TheFileVisitor();
                 try {
-                    Files.walkFileTree(file.toPath(), new TheFileVisitor());
+                    Files.walkFileTree(file.toPath(), visitor);
                 } catch (IOException e) {
                     System.err.println("Failed to visit directory '" + file + "':");
                     e.printStackTrace(System.err);
                 }
+                printMatches(visitor.matches.stream().sorted(Comparator.comparing(u -> u.title + u.file)).collect(Collectors.toList()));
                 return;
             }
 
@@ -85,11 +92,14 @@ public class Scanner {
         });
     }
 
-    private static void visitFile(File file) throws IOException {
+    private static void visitFile(File file, Set<Match> matches) throws IOException {
         final String fileName = file.getName();
+        if (fileName.startsWith("update-center.json")) {
+            return;
+        }
         if (fileName.endsWith(".jelly") || fileName.endsWith(".html") || fileName.endsWith(".properties")) {
             final String text = Files.readString(file.toPath());
-            printMatches(matchRegexes(JELLY_PATTERNS, text, file));
+            matches.addAll(matchRegexes(JELLY_PATTERNS, text, file));
         }
 
         if (fileName.endsWith(".java")) {
@@ -99,7 +109,7 @@ public class Scanner {
 
         if (fileName.endsWith(".js")) {
             final String text = Files.readString(file.toPath());
-            printMatches(matchRegexes(JS_PATTERNS, text, file));
+            matches.addAll(matchRegexes(JS_PATTERNS, text, file));
         }
     }
 
@@ -125,10 +135,11 @@ public class Scanner {
     }
 
     private static class TheFileVisitor extends SimpleFileVisitor<Path> {
+        private final Set<Match> matches = new HashSet<>();
         @Override
         public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
             try {
-                Scanner.visitFile(file.toFile());
+                Scanner.visitFile(file.toFile(), matches);
             } catch (Exception e) {
                 System.err.println("Failed to visit file '" + file + "':");
                 e.printStackTrace(System.err);
