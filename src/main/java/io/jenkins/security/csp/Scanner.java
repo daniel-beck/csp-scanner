@@ -43,11 +43,13 @@ public class Scanner {
         protected final String title;
         protected final String match;
         protected final File file;
+        private final long line;
 
-        private Match(String title, String match, File file) {
+        private Match(String title, String match, File file, long line) {
             this.title = title;
             this.match = match;
             this.file = file;
+            this.line = line;
         }
     }
 
@@ -72,7 +74,7 @@ public class Scanner {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-                printMatches(matches.stream().sorted(Comparator.comparing(u -> u.title + u.file)).collect(Collectors.toList()));
+                printMatches(matches.stream().sorted(Comparator.comparing(u -> u.title + u.file + u.line)).collect(Collectors.toList()));
                 return;
             }
 
@@ -84,7 +86,7 @@ public class Scanner {
                     System.err.println("Failed to visit directory '" + file + "':");
                     e.printStackTrace(System.err);
                 }
-                printMatches(visitor.matches.stream().sorted(Comparator.comparing(u -> u.title + u.file)).collect(Collectors.toList()));
+                printMatches(visitor.matches.stream().sorted(Comparator.comparing(u -> u.title + u.file + u.line)).collect(Collectors.toList()));
                 return;
             }
 
@@ -117,6 +119,7 @@ public class Scanner {
         matches.forEach(match -> {
             System.out.println("== " + match.title);
             System.out.println("File: " + match.file.toPath());
+            System.out.println("Line: " + match.line);
             System.out.println("----");
             System.out.println(match.match);
             System.out.println("----");
@@ -124,11 +127,14 @@ public class Scanner {
         });
     }
 
+    private static Pattern LINE_BREAK = Pattern.compile("\\R");
+
     public static List<Match> matchRegexes(Map<String, Pattern> patterns, String text, File file) {
         List<Match> results = new ArrayList<>();
         patterns.forEach((title, pattern) -> {
             pattern.matcher(text).results().forEach(result -> {
-                results.add(new Match(title, result.group(), file));
+                final long line = LINE_BREAK.matcher(text.substring(0, result.start())).results().count() + 1;
+                results.add(new Match(title, result.group(), file, line));
             });
         });
         return results;
