@@ -19,7 +19,13 @@ public class ScannerTest {
     public void issue1() {
         assertMatch("return \" onclick=\\\"fetch(decodeURIComponent(atob('\" + encodeForJavascript(url) + \"')), { method: 'post', headers: crumb.wrap({})}); return false\\\"\";",
                 Scanner.JAVA_PATTERNS,
-                "\" onclick=\\\"fetch(decodeURIComponent(atob('\"");
+                "onclick=\\\"fetch(decodeURIComponent(atob('\"");
+
+        assertMatch("\"<div class=\\\"collapseAction\\\"><p onClick=\\\"doToggle(this)\\\">\"", Scanner.JAVA_PATTERNS, "onClick=\\\"doToggle(this)\\\">\"");
+
+        assertMatch("text.addMarkup(0, 0, \"\", \"<div class=\\\"section\\\" data-level=\\\"\"+getCurrentLevelPrefix()+\"\\\"><div class=\\\"collapseHeader\\\">\" + getCurrentLevelPrefix() + Util.escape(section.getSectionDisplayName(m)) + \"<div class=\\\"collapseAction\\\"><p onClick=\\\"doToggle(this)\\\">\" + ((section.isCollapseSection()) ? \"Show Details\" : \"Hide Details\") +\"</p></div></div><div class=\\\"\" + ((section.isCollapseSection()) ? \"collapsed\" : \"expanded\") + \"\\\">\");",
+                Scanner.JAVA_PATTERNS,
+                "onClick=\\\"doToggle(this)\\\">\"");
     }
 
     @Test

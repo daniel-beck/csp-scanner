@@ -15,13 +15,14 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class Scanner {
+    private static final String JS_EVENT_ATTRIBUTES = "(on(auxclick|beforeinput|beforematch|beforetoggle|blur|cancel|canplay|canplaythrough|change|click|close|contextlost|contextmenu|contextrestored|copy|cuechange|cut|dblclick|drag|dragend|dragenter|dragleave|dragover|dragstart|drop|durationchange|emptied|ended|error|focus|formdata|input|invalid|keydown|keypress|keyup|load|loadeddata|loadedmetadata|loadstart|mousedown|mouseenter|mouseleave|mousemove|mouseout|mouseover|mouseup|paste|pause|play|playing|progress|ratechange|reset|resize|scroll|scrollend|securitypolicyviolation|seeked|seeking|select|slotchange|stalled|submit|suspend|timeupdate|toggle|volumechange|waiting|wheel))";
+
     /**
      * Patterns identified in .jelly files
      */
-    protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s(on[a-z]+)=[^>]+>"),
-            // Experimentally, the lookbehind is only relevant in syntactically invalid-ish files (layout/layout.jelly), but doesn't break anything either
-            "Inline Script Block", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?(?<!<script[^>]{0,1000}>)</script>", Pattern.DOTALL),
-            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')"));
+    protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s" + JS_EVENT_ATTRIBUTES + "=[^>]+>", Pattern.CASE_INSENSITIVE),
+            "Inline Script Block", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
+            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')", Pattern.CASE_INSENSITIVE));
 
     /**
      * Patterns identified in .js files
@@ -31,8 +32,8 @@ public class Scanner {
     // geval is defined in hudson-behavior.js
     protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
 
-    protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("((?<!\\\\)\")[^\"]*(?<![a-z0-9A-Z])(on[a-z]{3,20})=.*?((?<!\\\\)\")"),
-            "Inline Script Block (Java)", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?(?<!<script[^>]{0,1000}>)</script>", Pattern.DOTALL));
+    protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("(?<![a-z0-9])" + JS_EVENT_ATTRIBUTES + "=.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
+            "Inline Script Block (Java)", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE));
 
     protected static class Match {
         protected final String title;
