@@ -33,7 +33,8 @@ public class Scanner {
     protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
 
     protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("(?<![a-z0-9])" + JS_EVENT_ATTRIBUTES + "=.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
-            "Inline Script Block (Java)", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE));
+            "Inline Script Block (Java)", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
+            "FormApply#applyResponse", Pattern.compile("FormApply[.]applyResponse[(].*"));
 
     protected static class Match {
         protected final String title;
