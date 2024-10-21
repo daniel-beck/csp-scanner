@@ -16,6 +16,19 @@ import static org.hamcrest.Matchers.contains;
 
 public class ScannerTest {
     @Test
+    public void issue1() {
+        assertMatch("return \" onclick=\\\"fetch(decodeURIComponent(atob('\" + encodeForJavascript(url) + \"')), { method: 'post', headers: crumb.wrap({})}); return false\\\"\";",
+                Scanner.JAVA_PATTERNS,
+                "onclick=\\\"fetch(decodeURIComponent(atob('\"");
+
+        assertMatch("\"<div class=\\\"collapseAction\\\"><p onClick=\\\"doToggle(this)\\\">\"", Scanner.JAVA_PATTERNS, "onClick=\\\"doToggle(this)\\\">\"");
+
+        assertMatch("text.addMarkup(0, 0, \"\", \"<div class=\\\"section\\\" data-level=\\\"\"+getCurrentLevelPrefix()+\"\\\"><div class=\\\"collapseHeader\\\">\" + getCurrentLevelPrefix() + Util.escape(section.getSectionDisplayName(m)) + \"<div class=\\\"collapseAction\\\"><p onClick=\\\"doToggle(this)\\\">\" + ((section.isCollapseSection()) ? \"Show Details\" : \"Hide Details\") +\"</p></div></div><div class=\\\"\" + ((section.isCollapseSection()) ? \"collapsed\" : \"expanded\") + \"\\\">\");",
+                Scanner.JAVA_PATTERNS,
+                "onClick=\\\"doToggle(this)\\\">\"");
+    }
+
+    @Test
     public void issue2() {
         assertMatch("<f:textbox name=\"aggregatedTestResult.jobs\" value=\"${instance.jobs}\"\n" +
                 "checkUrl=\"'descriptorByName/hudson.tasks.test.AggregatedTestResultPublisher/check?value='+encodeURIComponent(this.value)\"\n" +
@@ -77,6 +90,8 @@ public class ScannerTest {
                 "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\">foo</script>",
                 Scanner.JELLY_PATTERNS,
                 "<script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\">foo</script>");
+
+        assertNoMatch("<ScriptApproval>.........</script>", Scanner.JELLY_PATTERNS);
     }
 
     private static void assertMatch(String haystack, Map<String, Pattern> patterns, String expectedMatch) {

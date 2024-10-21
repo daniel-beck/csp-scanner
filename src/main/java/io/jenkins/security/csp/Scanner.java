@@ -2,6 +2,8 @@ package io.jenkins.security.csp;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,19 +11,23 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Scanner {
+    private static final String JS_EVENT_ATTRIBUTES = "(on(auxclick|beforeinput|beforematch|beforetoggle|blur|cancel|canplay|canplaythrough|change|click|close|contextlost|contextmenu|contextrestored|copy|cuechange|cut|dblclick|drag|dragend|dragenter|dragleave|dragover|dragstart|drop|durationchange|emptied|ended|error|focus|formdata|input|invalid|keydown|keypress|keyup|load|loadeddata|loadedmetadata|loadstart|mousedown|mouseenter|mouseleave|mousemove|mouseout|mouseover|mouseup|paste|pause|play|playing|progress|ratechange|reset|resize|scroll|scrollend|securitypolicyviolation|seeked|seeking|select|slotchange|stalled|submit|suspend|timeupdate|toggle|volumechange|waiting|wheel))";
+
     /**
      * Patterns identified in .jelly files
      */
-    protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s(on[a-z]+)=[^>]+>"),
-            // Experimentally, the lookbehind is only relevant in syntactically invalid-ish files (layout/layout.jelly), but doesn't break anything either
-            "Inline Script Block", Pattern.compile("(<script>|<script[^>]*[^/]>)\\s*?(?!</script>)\\S.*?(?<!<script[^>]{0,1000}>)</script>", Pattern.DOTALL),
-            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')"));
+    protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s" + JS_EVENT_ATTRIBUTES + "=[^>]+>", Pattern.CASE_INSENSITIVE),
+            "Inline Script Block", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
+            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')", Pattern.CASE_INSENSITIVE));
 
     /**
      * Patterns identified in .js files
@@ -31,15 +37,21 @@ public class Scanner {
     // geval is defined in hudson-behavior.js
     protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
 
+    protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("(?<![a-z0-9])" + JS_EVENT_ATTRIBUTES + "=.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
+            "Inline Script Block (Java)", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
+            "FormApply#applyResponse", Pattern.compile("FormApply[.]applyResponse[(].*"));
+
     protected static class Match {
         protected final String title;
         protected final String match;
         protected final File file;
+        private final long line;
 
-        private Match(String title, String match, File file) {
+        private Match(String title, String match, File file, long line) {
             this.title = title;
             this.match = match;
             this.file = file;
+            this.line = line;
         }
     }
 
@@ -58,21 +70,25 @@ public class Scanner {
             }
 
             if (file.isFile()) {
+                final HashSet<Match> matches = new HashSet<>();
                 try {
-                    visitFile(file);
+                    visitFile(file, matches);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+                printMatches(matches.stream().sorted(Comparator.comparing(u -> u.title + u.file + u.line)).collect(Collectors.toList()));
                 return;
             }
 
             if (file.isDirectory()) {
+                final TheFileVisitor visitor = new TheFileVisitor();
                 try {
-                    Files.walkFileTree(file.toPath(), new TheFileVisitor());
+                    Files.walkFileTree(file.toPath(), visitor);
                 } catch (IOException e) {
                     System.err.println("Failed to visit directory '" + file + "':");
                     e.printStackTrace(System.err);
                 }
+                printMatches(visitor.matches.stream().sorted(Comparator.comparing(u -> u.title + u.file + u.line)).collect(Collectors.toList()));
                 return;
             }
 
@@ -80,22 +96,42 @@ public class Scanner {
         });
     }
 
-    private static void visitFile(File file) throws IOException {
-        if (file.getName().endsWith(".jelly")) {
-            final String text = Files.readString(file.toPath());
-            printMatches(matchRegexes(JELLY_PATTERNS, text, file));
+    private static String readFileToString(File file) throws IOException {
+        try {
+            return Files.readString(file.toPath());
+        } catch (MalformedInputException ex) {
+            // re-try with Latin-1 per https://github.com/daniel-beck/csp-scanner/pull/10#issuecomment-2423384611
+            // Technically only applies to .properties, and this is used for all files, but likely to be correct enough.
+            return Files.readString(file.toPath(), StandardCharsets.ISO_8859_1);
+        }
+    }
+
+    private static void visitFile(File file, Set<Match> matches) throws IOException {
+        final String fileName = file.getName();
+        if (fileName.startsWith("update-center.json")) {
+            return;
+        }
+        if (fileName.endsWith(".jelly") || fileName.endsWith(".html") || fileName.endsWith(".properties")) {
+            final String text = readFileToString(file);
+            matches.addAll(matchRegexes(JELLY_PATTERNS, text, file));
         }
 
-        if (file.getName().endsWith(".js")) {
-            final String text = Files.readString(file.toPath());
-            printMatches(matchRegexes(JS_PATTERNS, text, file));
+        if (fileName.endsWith(".java")) {
+            final String text = readFileToString(file);
+            printMatches(matchRegexes(JAVA_PATTERNS, text, file));
+        }
+
+        if (fileName.endsWith(".js")) {
+            final String text = readFileToString(file);
+            matches.addAll(matchRegexes(JS_PATTERNS, text, file));
         }
     }
 
     private static void printMatches(List<Match> matches) {
         matches.forEach(match -> {
             System.out.println("== " + match.title);
-            System.out.println("File: " + match.file.toPath());
+            System.out.println("File: " + match.file.toPath() + " +");
+            System.out.println("Line: " + match.line);
             System.out.println("----");
             System.out.println(match.match);
             System.out.println("----");
@@ -103,21 +139,25 @@ public class Scanner {
         });
     }
 
+    private static Pattern LINE_BREAK = Pattern.compile("\\R");
+
     public static List<Match> matchRegexes(Map<String, Pattern> patterns, String text, File file) {
         List<Match> results = new ArrayList<>();
         patterns.forEach((title, pattern) -> {
             pattern.matcher(text).results().forEach(result -> {
-                results.add(new Match(title, result.group(), file));
+                final long line = LINE_BREAK.matcher(text.substring(0, result.start())).results().count() + 1;
+                results.add(new Match(title, result.group(), file, line));
             });
         });
         return results;
     }
 
     private static class TheFileVisitor extends SimpleFileVisitor<Path> {
+        private final Set<Match> matches = new HashSet<>();
         @Override
         public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
             try {
-                Scanner.visitFile(file.toFile());
+                Scanner.visitFile(file.toFile(), matches);
             } catch (Exception e) {
                 System.err.println("Failed to visit file '" + file + "':");
                 e.printStackTrace(System.err);
