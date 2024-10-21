@@ -2,6 +2,8 @@ package io.jenkins.security.csp;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,23 +96,33 @@ public class Scanner {
         });
     }
 
+    private static String readFileToString(File file) throws IOException {
+        try {
+            return Files.readString(file.toPath());
+        } catch (MalformedInputException ex) {
+            // re-try with Latin-1 per https://github.com/daniel-beck/csp-scanner/pull/10#issuecomment-2423384611
+            // Technically only applies to .properties, and this is used for all files, but likely to be correct enough.
+            return Files.readString(file.toPath(), StandardCharsets.ISO_8859_1);
+        }
+    }
+
     private static void visitFile(File file, Set<Match> matches) throws IOException {
         final String fileName = file.getName();
         if (fileName.startsWith("update-center.json")) {
             return;
         }
         if (fileName.endsWith(".jelly") || fileName.endsWith(".html") || fileName.endsWith(".properties")) {
-            final String text = Files.readString(file.toPath());
+            final String text = readFileToString(file);
             matches.addAll(matchRegexes(JELLY_PATTERNS, text, file));
         }
 
         if (fileName.endsWith(".java")) {
-            final String text = Files.readString(file.toPath());
+            final String text = readFileToString(file);
             printMatches(matchRegexes(JAVA_PATTERNS, text, file));
         }
 
         if (fileName.endsWith(".js")) {
-            final String text = Files.readString(file.toPath());
+            final String text = readFileToString(file);
             matches.addAll(matchRegexes(JS_PATTERNS, text, file));
         }
     }
