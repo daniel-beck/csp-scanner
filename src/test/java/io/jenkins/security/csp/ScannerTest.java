@@ -90,6 +90,8 @@ public class ScannerTest {
                 "      <script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\">foo</script>",
                 Scanner.JELLY_PATTERNS,
                 "<script type=\"text/javascript\" src=\"${request.contextPath}/plugin/rusalad-plugin/scripts/rusalad/rusalad.js\">foo</script>");
+
+        assertNoMatch("<ScriptApproval>.........</script>", Scanner.JELLY_PATTERNS);
     }
 
     private static void assertMatch(String haystack, Map<String, Pattern> patterns, String expectedMatch) {
