@@ -108,10 +108,10 @@ public class Scanner {
 
     private static void visitFile(File file, Set<Match> matches) throws IOException {
         final String fileName = file.getName();
-        if (fileName.endsWith("update-center.json")) {
+        if (fileName.startsWith("update-center.json")) {
             return;
         }
-        if (fileName.endsWith("yui-license.html")) {
+        if (fileName.startsWith("yui-license.html")) {
             return;
         }
         if (fileName.endsWith(".jelly") || fileName.endsWith(".html") || fileName.endsWith(".properties")) {
