@@ -111,6 +111,9 @@ public class Scanner {
         if (fileName.startsWith("update-center.json")) {
             return;
         }
+        if (fileName.startsWith("yui-license.html")) {
+            return;
+        }
         if (fileName.endsWith(".jelly") || fileName.endsWith(".html") || fileName.endsWith(".properties")) {
             final String text = readFileToString(file);
             matches.addAll(matchRegexes(JELLY_PATTERNS, text, file));
