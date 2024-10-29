@@ -94,6 +94,28 @@ public class ScannerTest {
         assertNoMatch("<ScriptApproval>.........</script>", Scanner.JELLY_PATTERNS);
     }
 
+    @Test
+    public void javascriptSchemeInJellyViews() {
+        String noQuote = "<a href=javascript:randomJavaScript;>";
+        String simpleQuote = "<a href='javascript:randomJavaScript;'>";
+        String doubleQuote = "<a href=\"javascript:randomJavaScript;\">";
+
+        assertMatch(noQuote, Scanner.JELLY_PATTERNS, noQuote);
+        assertMatch(simpleQuote, Scanner.JELLY_PATTERNS, simpleQuote);
+        assertMatch(doubleQuote, Scanner.JELLY_PATTERNS, doubleQuote);
+    }
+
+    @Test
+    public void javascriptSchemeInJavaFiles() {
+        String noQuote = "\"<a href=\\\"javascript:randomJavaScript\\\">\"";
+        String simpleQuote = "\"<a href='javascript:randomJavaScript'>\"";
+        String doubleQuote = "\"<a href=javascript:randomJavaScript>\"";
+
+        assertMatch(noQuote, Scanner.JAVA_PATTERNS, noQuote);
+        assertMatch(simpleQuote, Scanner.JAVA_PATTERNS, simpleQuote);
+        assertMatch(doubleQuote, Scanner.JAVA_PATTERNS, doubleQuote);
+    }
+
     private static void assertMatch(String haystack, Map<String, Pattern> patterns, String expectedMatch) {
         final File dummy = new File("dummy");
         final List<Scanner.Match> matches = Scanner.matchRegexes(patterns, haystack, dummy);
