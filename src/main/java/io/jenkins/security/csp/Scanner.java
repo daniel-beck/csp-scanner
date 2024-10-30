@@ -20,14 +20,15 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Scanner {
-    private static final String JS_EVENT_ATTRIBUTES = "(on(auxclick|beforeinput|beforematch|beforetoggle|blur|cancel|canplay|canplaythrough|change|click|close|contextlost|contextmenu|contextrestored|copy|cuechange|cut|dblclick|drag|dragend|dragenter|dragleave|dragover|dragstart|drop|durationchange|emptied|ended|error|focus|formdata|input|invalid|keydown|keypress|keyup|load|loadeddata|loadedmetadata|loadstart|mousedown|mouseenter|mouseleave|mousemove|mouseout|mouseover|mouseup|paste|pause|play|playing|progress|ratechange|reset|resize|scroll|scrollend|securitypolicyviolation|seeked|seeking|select|slotchange|stalled|submit|suspend|timeupdate|toggle|volumechange|waiting|wheel))";
+    private static final String JS_EVENT_ATTRIBUTES = "(on(abort|afterprint|animationcancel|animationend|animationiteration|animationstart|appinstalled|auxclick|beforeinput|beforeinstallprompt|beforematch|beforeprint|beforetoggle|beforeunload|blur|cancel|canplay|canplaythrough|change|click|close|compositionend|compositionstart|compositionupdate|contentvisibilityautostatechange|contextmenu|copy|cuechange|cut|dblclick|devicemotion|deviceorientation|deviceorientationabsolute|DOMContentLoaded|drag|dragend|dragenter|dragleave|dragover|dragstart|drop|durationchange|emptied|encrypted|ended|endEvent|error|focus|focusin|focusout|formdata|fullscreenchange|fullscreenerror|gamepadconnected|gamepaddisconnected|gotpointercapture|hashchange|input|invalid|keydown|keypress|keyup|languagechange|load|loadeddata|loadedmetadata|loadend|loadstart|lostpointercapture|message|messageerror|mousedown|mouseenter|mouseleave|mousemove|mouseout|mouseover|mouseup|mousewheel|offline|online|pagehide|pageshow|paste|pause|play|playing|pointercancel|pointerdown|pointerenter|pointerleave|pointerlockchange|pointerlockerror|pointermove|pointerout|pointerover|pointerup|popstate|progress|ratechange|readystatechange|rejectionhandled|resize|resourcetimingbufferfull|resume|scroll|scrollend|securitypolicyviolation|seeked|seeking|select|selectionchange|slotchange|stalled|start|stop|storage|submit|suspend|timeupdate|timeout|toggle|touchcancel|touchend|touchmove|touchstart|transitioncancel|transitionend|transitionrun|transitionstart|unhandledrejection|visibilitychange|volumechange|waiting|wheel))";
 
     /**
      * Patterns identified in .jelly files
      */
     protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s" + JS_EVENT_ATTRIBUTES + "=[^>]+>", Pattern.CASE_INSENSITIVE),
             "Inline Script Block", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
-            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')", Pattern.CASE_INSENSITIVE));
+            "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')", Pattern.CASE_INSENSITIVE),
+            "Javascript scheme", Pattern.compile("<[^>]+javascript:[^>]+>", Pattern.CASE_INSENSITIVE));
 
     /**
      * Patterns identified in .js files
@@ -39,7 +40,8 @@ public class Scanner {
 
     protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("(?<![a-z0-9])" + JS_EVENT_ATTRIBUTES + "=.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
             "Inline Script Block (Java)", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
-            "FormApply#applyResponse", Pattern.compile("FormApply[.]applyResponse[(].*"));
+            "FormApply#applyResponse", Pattern.compile("FormApply[.]applyResponse[(].*"),
+            "Javascript scheme (Java)", Pattern.compile("\".*(?<![a-z0-9])javascript:.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE));
 
     protected static class Match {
         protected final String title;
