@@ -116,6 +116,30 @@ public class ScannerTest {
         assertMatch(doubleQuote, Scanner.JAVA_PATTERNS, doubleQuote);
     }
 
+    @Test
+    public void javascriptSchemeInJavaScriptFiles() {
+        String doubleQuote = "\"<a href=\\\"javascript:randomJavaScript\\\">\"";
+        String simpleQuote = "\"<a href='javascript:randomJavaScript'>\"";
+        String noQuote = "\"<a href=javascript:randomJavaScript>\"";
+
+        assertMatch(noQuote, Scanner.JS_PATTERNS, noQuote);
+        assertMatch(simpleQuote, Scanner.JS_PATTERNS, simpleQuote);
+        assertMatch(doubleQuote, Scanner.JS_PATTERNS, doubleQuote);
+    }
+
+    @Test
+    public void inlineHandlersInJavaScriptFiles() {
+        String doubleQuote = "html.push('<div class=\"task-manual\" id=\"manual-' + id + '\" title=\"Trigger manual build\" onCliCk=\"invokeMe(\\'trigger\\')\">');";
+        String singleQuote = "html.push('<div class=\"task-manual\" id=\"manual-' + id + '\" title=\"Trigger manual build\" onclick='invokeMe(\\'trigger\\')'>');";
+        String noQuote = "html.push('<div class=\"task-manual\" id=\"manual-' + id + '\" title=\"Trigger manual build\" onclick=invokeMe(\\'trigger\\')>');";
+        String noMatch = "document.onload=function(){ console.log(1) }";
+
+        assertMatch(doubleQuote, Scanner.JS_PATTERNS, " onCliCk=\"invokeMe(");
+        assertMatch(singleQuote, Scanner.JS_PATTERNS, " onclick='invokeMe(");
+        assertMatch(noQuote, Scanner.JS_PATTERNS, " onclick=invokeMe(");
+        assertNoMatch(noMatch, Scanner.JS_PATTERNS);
+    }
+
     private static void assertMatch(String haystack, Map<String, Pattern> patterns, String expectedMatch) {
         final File dummy = new File("dummy");
         final List<Scanner.Match> matches = Scanner.matchRegexes(patterns, haystack, dummy);

@@ -36,7 +36,9 @@ public class Scanner {
     // Examples indicate trying to match open-paren would be too restrictive:
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
     // geval is defined in hudson-behavior.js
-    protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
+    protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"),
+            "Inline Event Handler (JavaScript)", Pattern.compile("[\\s+]" + JS_EVENT_ATTRIBUTES + ".*?((?<!\\\\)['\"]?)[_\\w]+\\s*\\(", Pattern.CASE_INSENSITIVE),
+            "Javascript scheme (JavaScript)", Pattern.compile("\".*(?<![a-z0-9])javascript:.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE));
 
     protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("(?<![a-z0-9])" + JS_EVENT_ATTRIBUTES + "=.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
             "Inline Script Block (Java)", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
@@ -123,7 +125,7 @@ public class Scanner {
 
         if (fileName.endsWith(".java")) {
             final String text = readFileToString(file);
-            printMatches(matchRegexes(JAVA_PATTERNS, text, file));
+            matches.addAll(matchRegexes(JAVA_PATTERNS, text, file));
         }
 
         if (fileName.endsWith(".js")) {
