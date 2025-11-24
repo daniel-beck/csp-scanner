@@ -28,7 +28,9 @@ public class Scanner {
     protected static final Map<String, Pattern> JELLY_PATTERNS = Map.of("Inline Event Handler", Pattern.compile("<[^>]+\\s" + JS_EVENT_ATTRIBUTES + "=[^>]+>", Pattern.CASE_INSENSITIVE),
             "Inline Script Block", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
             "Legacy checkUrl", Pattern.compile("(checkUrl=\"[^\"]*'[^\"]*'[^\"]*\")|(checkUrl='[^']*\"[^']*\"[^']*')", Pattern.CASE_INSENSITIVE),
-            "Javascript scheme", Pattern.compile("<[^>]+javascript:[^>]+>", Pattern.CASE_INSENSITIVE));
+            "Javascript scheme", Pattern.compile("<[^>]+javascript:[^>]+>", Pattern.CASE_INSENSITIVE),
+            "Outside script src", Pattern.compile("<script[^>]+src=[\"']?(//|http)[^>]+>", Pattern.CASE_INSENSITIVE),
+            "st:bind with complex argument", Pattern.compile("<st:bind\\s+[^>]*?var=[\"'][^\"']*[^a-zA-Z0-9${}\"'][^\"']*[\"'][^>]*>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
 
     /**
      * Patterns identified in .js files
@@ -36,12 +38,14 @@ public class Scanner {
     // Examples indicate trying to match open-paren would be too restrictive:
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#direct_and_indirect_eval
     // geval is defined in hudson-behavior.js
-    protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"));
+    protected static final Map<String, Pattern> JS_PATTERNS = Map.of("(g)eval Call", Pattern.compile("\\Wg?eval\\W"),
+            "setTimeout/setInterval with String Argument", Pattern.compile("\\b(setTimeout|setInterval)\\s*\\(\\s*(['\"`/]).*?\\2", Pattern.DOTALL));
 
     protected static final Map<String, Pattern> JAVA_PATTERNS = Map.of("Inline Event Handler (Java)", Pattern.compile("(?<![a-z0-9])" + JS_EVENT_ATTRIBUTES + "=.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
             "Inline Script Block (Java)", Pattern.compile("(<script>|<script(|\\s[^>]*)[^/]>)\\s*?(?!</script>)\\S.*?</script>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE),
             "FormApply#applyResponse", Pattern.compile("FormApply[.]applyResponse[(].*"),
-            "Javascript scheme (Java)", Pattern.compile("\".*(?<![a-z0-9])javascript:.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE));
+            "Javascript scheme (Java)", Pattern.compile("\".*(?<![a-z0-9])javascript:.*?((?<!\\\\)\")", Pattern.CASE_INSENSITIVE),
+            "Avatar images extension points", Pattern.compile("extends[^{]+(AvatarMetadataAction|UserAvatarResolver)\\b"));
 
     protected static class Match {
         protected final String title;

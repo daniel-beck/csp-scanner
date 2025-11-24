@@ -95,6 +95,29 @@ public class ScannerTest {
     }
 
     @Test
+    public void testOutsideSrc() {
+        assertMatch("<script src='https://example.org'/>", Scanner.JELLY_PATTERNS, "<script src='https://example.org'/>");
+        assertMatch("<script type='text/javascript' src='https://example.org'/>", Scanner.JELLY_PATTERNS, "<script type='text/javascript' src='https://example.org'/>");
+        assertMatch("<script src=\"http://example.org\"  type=\"text/javascript\" />", Scanner.JELLY_PATTERNS, "<script src=\"http://example.org\"  type=\"text/javascript\" />");
+        assertMatch("<script src='//example.org'/>", Scanner.JELLY_PATTERNS, "<script src='//example.org'/>");
+        assertNoMatch("<script src='/path'/>", Scanner.JELLY_PATTERNS);
+    }
+
+    @Test
+    public void setTimeoutWithStringArgumentInJSFiles() {
+        assertMatch("setTimeout('alert(\"Hello World\")', 1000);", Scanner.JS_PATTERNS, "setTimeout('alert(\"Hello World\")'");
+        assertMatch("setTimeout(\"alert('Hello World')\", 1000);", Scanner.JS_PATTERNS, "setTimeout(\"alert('Hello World')\"");
+        assertMatch("setInterval('alert(\"Hello World\")', 1000);", Scanner.JS_PATTERNS, "setInterval('alert(\"Hello World\")'");
+        assertMatch("setInterval(`alert(\"Hello World)`', 1000);", Scanner.JS_PATTERNS, "setInterval(`alert(\"Hello World)`");
+        assertMatch("setInterval(/alert(\"Hello World)/', 1000);", Scanner.JS_PATTERNS, "setInterval(/alert(\"Hello World)/");
+
+        assertNoMatch("setTimeout(function(){alert('1')});", Scanner.JS_PATTERNS);
+        assertNoMatch("setTimeout(alert('1'));", Scanner.JS_PATTERNS);
+        assertNoMatch("setTimeout(function(){alert(\"1\")});", Scanner.JS_PATTERNS);
+        assertNoMatch("setTimeout(alert(\"1\"));", Scanner.JS_PATTERNS);
+    }
+
+    @Test
     public void javascriptSchemeInJellyViews() {
         String noQuote = "<a href=javascript:randomJavaScript;>";
         String simpleQuote = "<a href='javascript:randomJavaScript;'>";
@@ -106,14 +129,15 @@ public class ScannerTest {
     }
 
     @Test
-    public void javascriptSchemeInJavaFiles() {
-        String noQuote = "\"<a href=\\\"javascript:randomJavaScript\\\">\"";
-        String simpleQuote = "\"<a href='javascript:randomJavaScript'>\"";
-        String doubleQuote = "\"<a href=javascript:randomJavaScript>\"";
+    public void stBindWithComplexArgumentInJellyViews() {
+        assertNoMatch("<st:bind var=\"simpleVar\" />", Scanner.JELLY_PATTERNS);
+        assertNoMatch("<st:bind var='simpleVar' />", Scanner.JELLY_PATTERNS);
+        assertNoMatch("<st:bind var=\"foo${bar}\" />", Scanner.JELLY_PATTERNS);
+        assertNoMatch("<st:bind var='foo${bar}' />", Scanner.JELLY_PATTERNS);
 
-        assertMatch(noQuote, Scanner.JAVA_PATTERNS, noQuote);
-        assertMatch(simpleQuote, Scanner.JAVA_PATTERNS, simpleQuote);
-        assertMatch(doubleQuote, Scanner.JAVA_PATTERNS, doubleQuote);
+        assertMatch("<st:bind var=\"foo[bar]\" />", Scanner.JELLY_PATTERNS, "<st:bind var=\"foo[bar]\" />");
+        assertMatch("<st:bind var=\"foo['bar']\" />", Scanner.JELLY_PATTERNS, "<st:bind var=\"foo['bar']\" />");
+        assertMatch("<st:bind var=\"foo.bar\" />", Scanner.JELLY_PATTERNS, "<st:bind var=\"foo.bar\" />");
     }
 
     private static void assertMatch(String haystack, Map<String, Pattern> patterns, String expectedMatch) {
